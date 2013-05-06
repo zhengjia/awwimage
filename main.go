@@ -14,7 +14,7 @@ func Endpoints() *map[string]string{
     "/": "Instruction",
     "count": "Total count of this picture type",
     "random": "Random",
-    "bomb": "Photo bomb update to 10 images",
+    "bomb": "Photo bomb up to 10 images",
   }
 }
 
