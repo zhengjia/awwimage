@@ -9,6 +9,12 @@ import(
 
 type ImagemiServer struct{}
 
+func check(err error) {
+  if err != nil {
+    panic(err)
+  }
+}
+
 func Endpoints() *map[string]string{
   return &map[string]string{
     "/": "Instruction",
@@ -20,9 +26,7 @@ func Endpoints() *map[string]string{
 
 func instruction(res http.ResponseWriter, req *http.Request){
   result, err := json.Marshal( *Endpoints() )
-  if err != nil {
-    fmt.Println(err)
-  }
+  check(err)
   fmt.Fprint(res, string(result) )
 }
 
