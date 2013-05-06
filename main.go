@@ -8,8 +8,8 @@ import(
 
 type ImagemiServer struct{}
 
-func (h ImagemiServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprint(w, "Hello!")
+func root(res http.ResponseWriter, req *http.Request){
+  fmt.Fprint(res, "Hello!")
 }
 
 func main() {
@@ -17,6 +17,7 @@ func main() {
     if port == "" {
       port = "4000"
     }
-    var h ImagemiServer
-    http.ListenAndServe(":" + port, h)
+    // var h ImagemiServer
+    http.HandleFunc("/", root)
+    http.ListenAndServe(":" + port, nil)
 }
