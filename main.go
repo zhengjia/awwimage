@@ -8,8 +8,8 @@ import(
 	"io/ioutil"
 )
 
-var valid_types = make([]string, 3)
-var mapping = make(map[string][]string)
+var valid_kinds = make([]string, 3)
+var image_mapping = make(map[string][]string)
 var api_key string
 
 func instruction(res http.ResponseWriter, req *http.Request) {
@@ -20,7 +20,7 @@ func instruction(res http.ResponseWriter, req *http.Request) {
 
 func count(res http.ResponseWriter, req *http.Request) {
   var kind = req.FormValue("kind")
-  fmt.Fprint(res, map[string]int{"count": len(mapping[kind])} )
+  fmt.Fprint(res, map[string]int{"count": len(image_mapping[kind])} )
 }
 
 func random(res http.ResponseWriter, req *http.Request) {
@@ -38,8 +38,8 @@ func check(err error) {
 
 func Endpoints() *map[string]string {
   return &map[string]string{
-    "/": "Instruction",
-    "count": "Total count of this picture type",
+    "/": "help page",
+    "count": "Total image count for this picture kind",
     "random": "Random",
     "bomb": "Photo bomb up to 10 images",
   }
@@ -64,7 +64,7 @@ func visit(url string) {
   
 }
 
-func populate_mapping(kind string) {
+func populate_image_mapping(kind string) {
   url_template := "http://api.tumblr.com/v2/tagged?api_key=" + api_key + "&tag=" + kind
   url := url_template
   resp, err := http.Get(url)
@@ -73,7 +73,7 @@ func populate_mapping(kind string) {
   check(err)
   body_string := string(body_bytes)
   fmt.Println(body_string)
-  // mapping[kind] = api_body
+  // image_mapping[kind] = api_body
   // err := json.Unmarshal(api_body, &u)
   // check(err)
 }
@@ -82,8 +82,8 @@ func initialize(){
   set_api_key()
   kinds := []string{"pug", "corgi", "cat"}
   for _, kind := range kinds {
-    mapping[kind] = []string{}
-    populate_mapping(kind)
+    image_mapping[kind] = []string{}
+    populate_image_mapping(kind)
   }
 }
 
