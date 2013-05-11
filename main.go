@@ -6,11 +6,30 @@ import(
 	"os"
 	"encoding/json"
 	"io/ioutil"
+	"github.com/bmizerany/pat"
 )
 
+var limit = 100
 var valid_kinds = make([]string, 3)
 var image_mapping = make(map[string][]string)
 var api_key string
+
+type PhotoProperty struct {
+  Url string
+}
+
+type Photo struct {
+  OriginalPhoto PhotoProperty `json:"original_size"`
+}
+
+type Blog struct {
+  Timestamp int
+  Photos []Photo
+}
+
+type TaggedApiResponse struct {
+  Blogs []Blog `json:"response"`
+}
 
 func instruction(res http.ResponseWriter, req *http.Request) {
   result, err := json.Marshal( *Endpoints() )
@@ -38,10 +57,10 @@ func check(err error) {
 
 func Endpoints() *map[string]string {
   return &map[string]string{
-    "/": "help page",
-    "count": "Total image count for this picture kind",
-    "random": "Random",
-    "bomb": "Photo bomb up to 10 images",
+    "/instruction": "Get a random image. Supported query keywords: pug, corgi, cat",
+    "/count/:keyword": "Total images available",
+    "/random/:keyword": "Get a random image",
+    "/bomb/:keyword/:number": "Get up to 10 images",
   }
 }
 
@@ -60,22 +79,41 @@ func set_api_key() {
   check(err)
 }
 
-func visit(url string) {
+func visit(url string) []byte{
+  var err error
+  var resp *http.Response
+  var body_bytes []byte
   
+  resp, err = http.Get(url)
+  body_bytes, err = ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+  check(err)
+  return body_bytes
 }
 
 func populate_image_mapping(kind string) {
-  url_template := "http://api.tumblr.com/v2/tagged?api_key=" + api_key + "&tag=" + kind
-  url := url_template
-  resp, err := http.Get(url)
-  body_bytes, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
+  var timestamp int32
+  var url string
+  var url_template string
+  var err error
+  var body_bytes []byte
+  var tagged_api_response *TaggedApiResponse
+  url_template = "http://api.tumblr.com/v2/tagged?api_key=" + api_key + "&tag=" + kind
+  
+  if timestamp == 0 {
+    url = url_template
+  } else {
+    url = url_template + "&timestamp=" + string(timestamp)
+  }  
+  body_bytes = visit(url)
+  err = json.Unmarshal(body_bytes, &tagged_api_response)
   check(err)
-  body_string := string(body_bytes)
-  fmt.Println(body_string)
-  // image_mapping[kind] = api_body
-  // err := json.Unmarshal(api_body, &u)
-  // check(err)
+  for _, Blog := range tagged_api_response.Blogs {
+    for _, Photo := range Blog.Photos {
+      image_mapping[kind] = append(image_mapping[kind], Photo.OriginalPhoto.Url )
+    }  
+  }
+  fmt.Println(image_mapping[kind])
 }
 
 func initialize(){
@@ -89,9 +127,13 @@ func initialize(){
 
 func main() {
   initialize()
-  http.HandleFunc("/", instruction)
-  http.HandleFunc("/count", count)
-  http.HandleFunc("/random", random)
-  http.HandleFunc("/bomb", bomb)
+  m := pat.New()
+  m.Get("/", http.HandlerFunc(instruction))
+  m.Get("/count/:kind", http.HandlerFunc(count))
+  m.Get("/random/:kind", http.HandlerFunc(random))
+  m.Get("/bomb/:kind/:number", http.HandlerFunc(bomb))
+  http.Handle("/", m)
+  
+  http.HandleFunc("/instruction", instruction)
   http.ListenAndServe(":" + get_port(), nil)
 }
