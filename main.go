@@ -99,21 +99,23 @@ func populate_image_mapping(kind string) {
   var body_bytes []byte
   var tagged_api_response *TaggedApiResponse
   url_template = "http://api.tumblr.com/v2/tagged?api_key=" + api_key + "&tag=" + kind
-  
-  if timestamp == 0 {
-    url = url_template
-  } else {
-    url = url_template + "&timestamp=" + string(timestamp)
-  }  
-  body_bytes = visit(url)
-  err = json.Unmarshal(body_bytes, &tagged_api_response)
-  check(err)
-  for _, Blog := range tagged_api_response.Blogs {
-    for _, Photo := range Blog.Photos {
-      image_mapping[kind] = append(image_mapping[kind], Photo.OriginalPhoto.Url )
+  for len(image_mapping[kind] < limit) {
+    if timestamp == 0 {
+      url = url_template
+    } else {
+      url = url_template + "&timestamp=" + string(timestamp)
     }  
-  }
-  fmt.Println(image_mapping[kind])
+    body_bytes = visit(url)
+    err = json.Unmarshal(body_bytes, &tagged_api_response)
+    check(err)
+    for _, Blog := range tagged_api_response.Blogs {
+      timestamp = Blog.Timestamp
+      for _, Photo := range Blog.Photos {
+        image_mapping[kind] = append(image_mapping[kind], Photo.OriginalPhoto.Url )
+      }  
+    }
+  }  
+
 }
 
 func initialize(){
@@ -123,6 +125,7 @@ func initialize(){
     image_mapping[kind] = []string{}
     populate_image_mapping(kind)
   }
+  fmt.Println(image_mapping)
 }
 
 func main() {
