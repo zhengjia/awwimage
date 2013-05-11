@@ -147,10 +147,10 @@ func populate_image_mapping(kind string) {
 
 func initialize(){
   set_api_key()
-  kinds := []string{"pug", "corgi", "shiba", "cat",}
+  kinds := []string{"pug", "corgi", "shiba", "cat", "giraffe",}
   for _, kind := range kinds {
     image_mapping[kind] = []string{}
-    populate_image_mapping(kind)
+    go populate_image_mapping(kind)
   }
   rand.Seed( time.Now().UTC().UnixNano())
 }
