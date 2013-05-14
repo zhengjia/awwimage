@@ -34,25 +34,25 @@ type TaggedApiResponse struct {
   Blogs []Blog `json:"response"`
 }
 
-func get_json_string(v interface{}) string{
+func GetJsonString(v interface{}) string{
   result, err := json.Marshal( v )
   check(err)
   return string(result)
 }
 
 func instruction(res http.ResponseWriter, req *http.Request) {
-  fmt.Fprint(res, get_json_string( Endpoints()) )
+  fmt.Fprint(res, GetJsonString( Endpoints()) )
 }
 
 func count(res http.ResponseWriter, req *http.Request) {
   kind := req.URL.Query().Get(":kind")
-  fmt.Fprint(res, get_json_string(&map[string]int{"count": len(image_mapping[kind])} ) )
+  fmt.Fprint(res, GetJsonString(&map[string]int{"count": len(image_mapping[kind])} ) )
 }
 
 func random(res http.ResponseWriter, req *http.Request) {
   kind := req.URL.Query().Get(":kind")
   index := rand.Intn(len(image_mapping[kind]))
-  fmt.Fprint(res, get_json_string(&map[string]string{"url": image_mapping[kind][index]} ) )
+  fmt.Fprint(res, GetJsonString(&map[string]string{"url": image_mapping[kind][index]} ) )
 }
 
 func bomb(res http.ResponseWriter, req *http.Request) {
@@ -67,12 +67,12 @@ func bomb(res http.ResponseWriter, req *http.Request) {
   for _, pos := range permutation[:number_str] {
     result = append(result, image_mapping[kind][pos])
   }
-  fmt.Fprint(res, get_json_string(&map[string][]string{"urls": result} ) )
+  fmt.Fprint(res, GetJsonString(&map[string][]string{"urls": result} ) )
 }
 
 func all(res http.ResponseWriter, req *http.Request) {
   kind := req.URL.Query().Get(":kind")
-  fmt.Fprint(res, get_json_string(&map[string][]string{"urls": image_mapping[kind]} ) )
+  fmt.Fprint(res, GetJsonString(&map[string][]string{"urls": image_mapping[kind]} ) )
 }
 
 // helper methods
