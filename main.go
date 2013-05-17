@@ -10,7 +10,6 @@ import(
 	"time"
 	"math/rand"
 	"strconv"
-	"regexp"
 )
 
 var lower_limit = 300
@@ -72,8 +71,8 @@ func bomb(res http.ResponseWriter, req *http.Request) {
 }
 
 func reload(w http.ResponseWriter, req *http.Request) {
-  localhostRegex := regexp.MustCompile(`cocacola`)
-  if localhostRegex.Match([]byte( req.URL.Path) ){
+  user = req.URL.User
+  if user.Username == "aww" and user.Password == "image"
     populate_mapping()
   } else {
     http.NotFound(w, req)
