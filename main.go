@@ -13,7 +13,7 @@ import(
 	"regexp"
 )
 
-var lower_limit = 50
+var lower_limit = 300
 var valid_kinds = make([]string, 3)
 var image_mapping = make(map[string][]string)
 var api_key string
@@ -89,7 +89,7 @@ func check(err error) {
 
 func Endpoints() *map[string]string {
   return &map[string]string{
-    "/instruction": "Get a random image. Supported query keywords: pug, corgi, cat",
+    "/instruction": "Get a random image. Supported query keywords: pug, corgi, cat, giraffe",
     "/count/:keyword": "Total images available",
     "/random/:keyword": "Get a random image",
     "/bomb/:keyword/:number": "Get images. Default to 4 is number is not specified",
