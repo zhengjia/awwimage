@@ -6,3 +6,6 @@ awwimage
 
 3. Procfile
 web: awwimage
+
+appengine
+~/code/appengine/appcfg.py --oauth2 update .
