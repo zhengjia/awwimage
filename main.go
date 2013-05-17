@@ -12,7 +12,7 @@ import(
 	"strconv"
 )
 
-var lower_limit = 50
+var lower_limit = 300
 var valid_kinds = make([]string, 3)
 var image_mapping = make(map[string][]string)
 var api_key string
@@ -70,11 +70,6 @@ func bomb(res http.ResponseWriter, req *http.Request) {
   fmt.Fprint(res, GetJsonString(&map[string][]string{"urls": result} ) )
 }
 
-func all(res http.ResponseWriter, req *http.Request) {
-  kind := req.URL.Query().Get(":kind")
-  fmt.Fprint(res, GetJsonString(&map[string][]string{"urls": image_mapping[kind]} ) )
-}
-
 // helper methods
 func check(err error) {
   if err != nil {
@@ -87,8 +82,7 @@ func Endpoints() *map[string]string {
     "/instruction": "Get a random image. Supported query keywords: pug, corgi, cat",
     "/count/:keyword": "Total images available",
     "/random/:keyword": "Get a random image",
-    "/bomb/:keyword/:number": "Get up to 10 images",
-    "/all/:keyword": "All images",
+    "/bomb/:keyword/:number": "Get images. Default to 4 is number is not specified",
   }
 }
 
