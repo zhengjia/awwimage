@@ -1,4 +1,0 @@
-cron:
-- description: hourly summary job
-  url: /reload
-  schedule: every 1 hours
