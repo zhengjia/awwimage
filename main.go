@@ -71,7 +71,7 @@ func bomb(res http.ResponseWriter, req *http.Request) {
 }
 
 func reload(w http.ResponseWriter, req *http.Request) {
-  user = req.URL.User
+  user := req.URL.User
   if user.Username == "aww" && user.Password == "image" {
     populate_mapping()
   } else {
