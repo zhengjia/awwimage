@@ -1,1 +1,1 @@
-web: imagemi
+web: awwimage
