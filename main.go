@@ -10,9 +10,10 @@ import(
 	"time"
 	"math/rand"
 	"strconv"
+	"regexp"
 )
 
-var lower_limit = 300
+var lower_limit = 50
 var valid_kinds = make([]string, 3)
 var image_mapping = make(map[string][]string)
 var api_key string
@@ -70,6 +71,15 @@ func bomb(res http.ResponseWriter, req *http.Request) {
   fmt.Fprint(res, GetJsonString(&map[string][]string{"urls": result} ) )
 }
 
+func reload(w http.ResponseWriter, req *http.Request) {
+  localhostRegex := regexp.MustCompile(`127.0.0.1`)
+  if localhostRegex.Match([]byte( req.Host) ){
+    populate_mapping()
+  } else {
+    http.NotFound(w, req)
+  }
+}
+
 // helper methods
 func check(err error) {
   if err != nil {
@@ -113,7 +123,7 @@ func visit(url string) []byte{
   return body_bytes
 }
 
-func populate_image_mapping(kind string) {
+func populate(kind string) {
   var timestamp int
   var url string
   var url_template string
@@ -139,13 +149,17 @@ func populate_image_mapping(kind string) {
   }
 }
 
-func initialize(){
-  set_api_key()
+func populate_mapping() {
   kinds := []string{"pug", "corgi", "shiba", "cat", "giraffe",}
   for _, kind := range kinds {
     image_mapping[kind] = []string{}
-    go populate_image_mapping(kind)
+    go populate(kind)
   }
+}
+
+func initialize(){
+  set_api_key()
+  populate_mapping()
   rand.Seed( time.Now().UTC().UnixNano())
 }
 
@@ -157,7 +171,7 @@ func main() {
   m.Get("/random/:kind", http.HandlerFunc(random))
   m.Get("/bomb/:kind", http.HandlerFunc(bomb))
   m.Get("/bomb/:kind/:number", http.HandlerFunc(bomb))
-  m.Get("/all/:kind", http.HandlerFunc(bomb) )
+  m.Get("/reload", http.HandlerFunc(reload) )
   http.Handle("/", m)
   http.HandleFunc("/instruction", instruction)
   http.ListenAndServe(":" + get_port(), nil)
