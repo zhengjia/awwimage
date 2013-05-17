@@ -115,8 +115,8 @@ func visit(url string) []byte{
   var err error
   var resp *http.Response
   var body_bytes []byte
-  
   resp, err = http.Get(url)
+  check(err)
   body_bytes, err = ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
   check(err)
