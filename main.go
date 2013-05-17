@@ -73,7 +73,7 @@ func bomb(res http.ResponseWriter, req *http.Request) {
 
 func reload(w http.ResponseWriter, req *http.Request) {
   localhostRegex := regexp.MustCompile(`cocacola`)
-  if localhostRegex.Match([]byte( req.URL) ){
+  if localhostRegex.Match([]byte( req.URL.Path) ){
     populate_mapping()
   } else {
     http.NotFound(w, req)
