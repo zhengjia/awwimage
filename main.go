@@ -72,8 +72,8 @@ func bomb(res http.ResponseWriter, req *http.Request) {
 }
 
 func reload(w http.ResponseWriter, req *http.Request) {
-  localhostRegex := regexp.MustCompile(`127.0.0.1`)
-  if localhostRegex.Match([]byte( req.Host) ){
+  localhostRegex := regexp.MustCompile(`cocacola`)
+  if localhostRegex.Match([]byte( req.Path) ){
     populate_mapping()
   } else {
     http.NotFound(w, req)
@@ -171,7 +171,7 @@ func main() {
   m.Get("/random/:kind", http.HandlerFunc(random))
   m.Get("/bomb/:kind", http.HandlerFunc(bomb))
   m.Get("/bomb/:kind/:number", http.HandlerFunc(bomb))
-  m.Get("/reload", http.HandlerFunc(reload) )
+  m.Post("/reload", http.HandlerFunc(reload) )
   http.Handle("/", m)
   http.HandleFunc("/instruction", instruction)
   http.ListenAndServe(":" + get_port(), nil)
