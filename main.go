@@ -26,6 +26,7 @@ type Photo struct {
 	OriginalPhoto PhotoProperty `json:"original_size"`
 }
 
+// TODO Timestamp sometime is string
 type Blog struct {
 	Timestamp int
 	Photos    []Photo
@@ -130,8 +131,9 @@ func populate(kind string) {
 	var err error
 	var body_bytes []byte
 	var tagged_api_response *TaggedApiResponse
+	var results []string
 	url_template = "http://api.tumblr.com/v2/tagged?api_key=" + api_key + "&tag=" + kind
-	for len(image_mapping[kind]) < lower_limit {
+	for len(results) < lower_limit {
 		if timestamp == 0 {
 			url = url_template
 		} else {
@@ -143,16 +145,16 @@ func populate(kind string) {
 		for _, Blog := range tagged_api_response.Blogs {
 			timestamp = Blog.Timestamp
 			for _, Photo := range Blog.Photos {
-				image_mapping[kind] = append(image_mapping[kind], Photo.OriginalPhoto.Url)
+			  results = append(results, Photo.OriginalPhoto.Url)
 			}
 		}
 	}
+	image_mapping[kind] = results
 }
 
 func populate_mapping() {
 	kinds := []string{"pug", "corgi", "shiba", "cat", "giraffe"}
 	for _, kind := range kinds {
-		image_mapping[kind] = []string{}
 		go populate(kind)
 	}
 }
