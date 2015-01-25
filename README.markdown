@@ -1,10 +1,15 @@
-heroku deploy
-1. heroku config:add BUILDPACK_URL=https://github.com/kr/heroku-buildpack-go.git
+demo
+----
+http://awwimage.herokuapp.com/random/pug
 
-2. .godir
+heroku deploy
+-------------
+* heroku config:add BUILDPACK_URL=https://github.com/kr/heroku-buildpack-go.git
+
+* .godir
 awwimage
 
-3. Procfile
+* Procfile
 web: awwimage
 
 appengine
