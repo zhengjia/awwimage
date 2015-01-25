@@ -2,18 +2,21 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/bmizerany/pat"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
-	"regexp"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/bmizerany/pat"
 )
 
-var lower_limit = 300
+var image_limit = 300
+var server_started_at = time.Now()
 var valid_kinds = make([]string, 3)
 var image_mapping = make(map[string][]string)
 var api_key string
@@ -52,12 +55,14 @@ func count(res http.ResponseWriter, req *http.Request) {
 }
 
 func random(res http.ResponseWriter, req *http.Request) {
+	populate_uptime()
 	kind := req.URL.Query().Get(":kind")
 	index := rand.Intn(len(image_mapping[kind]))
 	fmt.Fprint(res, GetJsonString(&map[string]string{"url": image_mapping[kind][index]}))
 }
 
 func bomb(res http.ResponseWriter, req *http.Request) {
+	populate_uptime()
 	var result []string
 	kind := req.URL.Query().Get(":kind")
 	number := req.URL.Query().Get(":number")
@@ -70,15 +75,6 @@ func bomb(res http.ResponseWriter, req *http.Request) {
 		result = append(result, image_mapping[kind][pos])
 	}
 	fmt.Fprint(res, GetJsonString(&map[string][]string{"urls": result}))
-}
-
-func reload(w http.ResponseWriter, req *http.Request) {
-	localhostRegex := regexp.MustCompile(`cocacola`)
-	if localhostRegex.Match([]byte(req.FormValue("auth"))) {
-		populate_mapping()
-	} else {
-		http.NotFound(w, req)
-	}
 }
 
 // helper methods
@@ -108,8 +104,14 @@ func get_port() string {
 func set_api_key() {
 	var err error
 	config, err := ioutil.ReadFile("config")
-	api_key = string(config)
-	check(err)
+	if err == nil {
+		api_key = strings.TrimSpace(string(config))
+	} else {
+		api_key = os.Getenv("TUMBLR_KEY")
+		if api_key == "" {
+			check(errors.New("TUMBLR_KEY isn't set"))
+		}
+	}
 }
 
 func visit(url string) []byte {
@@ -133,7 +135,7 @@ func populate(kind string) {
 	var tagged_api_response *TaggedApiResponse
 	var results []string
 	url_template = "http://api.tumblr.com/v2/tagged?api_key=" + api_key + "&tag=" + kind
-	for len(results) < lower_limit {
+	for len(results) < image_limit {
 		if timestamp == 0 {
 			url = url_template
 		} else {
@@ -145,7 +147,7 @@ func populate(kind string) {
 		for _, Blog := range tagged_api_response.Blogs {
 			timestamp = Blog.Timestamp
 			for _, Photo := range Blog.Photos {
-			  results = append(results, Photo.OriginalPhoto.Url)
+				results = append(results, Photo.OriginalPhoto.Url)
 			}
 		}
 	}
@@ -156,6 +158,12 @@ func populate_mapping() {
 	kinds := []string{"pug", "corgi", "shiba", "cat", "giraffe"}
 	for _, kind := range kinds {
 		go populate(kind)
+	}
+}
+
+func populate_uptime() {
+	if time.Now().Sub(server_started_at) > time.Minute*1 {
+		populate_mapping()
 	}
 }
 
@@ -173,7 +181,6 @@ func main() {
 	m.Get("/random/:kind", http.HandlerFunc(random))
 	m.Get("/bomb/:kind", http.HandlerFunc(bomb))
 	m.Get("/bomb/:kind/:number", http.HandlerFunc(bomb))
-	m.Post("/reload", http.HandlerFunc(reload))
 	http.Handle("/", m)
 	http.HandleFunc("/instruction", instruction)
 	http.ListenAndServe(":"+get_port(), nil)
