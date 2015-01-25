@@ -1,6 +1,5 @@
 Just another pugme
 ==================
-
 Ramdom
 ------
 * http://awwimage.herokuapp.com/random/pug
@@ -14,6 +13,20 @@ Bomb
 * http://awwimage.herokuapp.com/bomb/corgi
 * http://awwimage.herokuapp.com/bomb/cat
 * http://awwimage.herokuapp.com/bomb/giraffe
+
+Preview
+-------
+* http://awwimage.herokuapp.com/random/pug/preview
+* http://awwimage.herokuapp.com/random/corgi/preview
+* http://awwimage.herokuapp.com/random/cat/preview
+* http://awwimage.herokuapp.com/random/giraffe/preview
+
+Direct link
+-----------
+* http://awwimage.herokuapp.com/random/pug/url
+* http://awwimage.herokuapp.com/random/corgi/url
+* http://awwimage.herokuapp.com/random/cat/url
+* http://awwimage.herokuapp.com/random/giraffe/url
 
 heroku deploy
 -------------

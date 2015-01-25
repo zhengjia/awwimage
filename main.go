@@ -57,8 +57,16 @@ func count(res http.ResponseWriter, req *http.Request) {
 func random(res http.ResponseWriter, req *http.Request) {
 	populate_uptime()
 	kind := req.URL.Query().Get(":kind")
+	action := req.URL.Query().Get(":action")
 	index := rand.Intn(len(image_mapping[kind]))
-	fmt.Fprint(res, GetJsonString(&map[string]string{"url": image_mapping[kind][index]}))
+	url := image_mapping[kind][index]
+	if action == "preview" {
+		fmt.Fprint(res, "<html><img src='"+url+"' /></html>")
+	} else if action == "url" {
+		fmt.Fprint(res, url)
+	} else {
+		fmt.Fprint(res, GetJsonString(&map[string]string{"url": url}))
+	}
 }
 
 func bomb(res http.ResponseWriter, req *http.Request) {
@@ -86,10 +94,10 @@ func check(err error) {
 
 func Endpoints() *map[string]string {
 	return &map[string]string{
-		"/instruction":           "Get a random image. Supported query keywords: pug, corgi, cat, giraffe",
-		"/count/:keyword":        "Total images available",
-		"/random/:keyword":       "Get a random image",
-		"/bomb/:keyword/:number": "Get images. Default to 4 is number is not specified",
+		"/instruction":             "Get a random image. Supported keywords: pug, corgi, cat, giraffe",
+		"/count/:keyword":          "Number of images available",
+		"/random/:keyword/:action": "Get a random image. Optional action: url (get the link directly), preview (preview the image)",
+		"/bomb/:keyword/:number":   "Get a number of images. Default to 4",
 	}
 }
 
@@ -178,7 +186,7 @@ func main() {
 	m := pat.New()
 	m.Get("/", http.HandlerFunc(instruction))
 	m.Get("/count/:kind", http.HandlerFunc(count))
-	m.Get("/random/:kind", http.HandlerFunc(random))
+	m.Get("/random/:kind/:action", http.HandlerFunc(random))
 	m.Get("/bomb/:kind", http.HandlerFunc(bomb))
 	m.Get("/bomb/:kind/:number", http.HandlerFunc(bomb))
 	http.Handle("/", m)
