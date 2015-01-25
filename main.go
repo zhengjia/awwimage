@@ -186,6 +186,7 @@ func main() {
 	m := pat.New()
 	m.Get("/", http.HandlerFunc(instruction))
 	m.Get("/count/:kind", http.HandlerFunc(count))
+	m.Get("/random/:kind", http.HandlerFunc(random))
 	m.Get("/random/:kind/:action", http.HandlerFunc(random))
 	m.Get("/bomb/:kind", http.HandlerFunc(bomb))
 	m.Get("/bomb/:kind/:number", http.HandlerFunc(bomb))
