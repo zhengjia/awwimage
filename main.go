@@ -169,7 +169,7 @@ func populate_mapping() {
 }
 
 func populate_uptime() {
-	if time.Now().Sub(server_started_at) > time.Minute*1 {
+	if time.Now().Sub(server_started_at) > time.Minute*60 {
 		populate_mapping()
 	}
 }
