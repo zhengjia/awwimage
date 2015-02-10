@@ -17,7 +17,6 @@ import (
 
 var image_limit = 300
 var server_started_at = time.Now()
-var valid_kinds = make([]string, 3)
 var image_mapping = make(map[string][]string)
 var api_key string
 
