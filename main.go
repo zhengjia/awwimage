@@ -19,6 +19,7 @@ var image_limit = 300
 var server_started_at = time.Now()
 var image_mapping = make(map[string][]string)
 var api_key string
+var kinds = []string{"pug", "corgi", "shiba", "cat", "giraffe"}
 
 type PhotoProperty struct {
 	Url string
@@ -133,7 +134,7 @@ func visit(url string) []byte {
 	return body_bytes
 }
 
-func populate(kind string) {
+func populate(kind string, count int) {
 	var timestamp int
 	var url string
 	var url_template string
@@ -142,7 +143,7 @@ func populate(kind string) {
 	var tagged_api_response *TaggedApiResponse
 	var results []string
 	url_template = "http://api.tumblr.com/v2/tagged?api_key=" + api_key + "&tag=" + kind
-	for len(results) < image_limit {
+	for len(results) < count {
 		if timestamp == 0 {
 			url = url_template
 		} else {
@@ -162,9 +163,8 @@ func populate(kind string) {
 }
 
 func populate_mapping() {
-	kinds := []string{"pug", "corgi", "shiba", "cat", "giraffe"}
 	for _, kind := range kinds {
-		go populate(kind)
+		go populate(kind, image_limit)
 	}
 }
 
@@ -176,7 +176,9 @@ func populate_uptime() {
 
 func initialize() {
 	set_api_key()
-	populate_mapping()
+	for _, kind := range kinds {
+		populate(kind, 5)
+	}
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
@@ -191,5 +193,6 @@ func main() {
 	m.Get("/bomb/:kind/:number", http.HandlerFunc(bomb))
 	http.Handle("/", m)
 	http.HandleFunc("/instruction", instruction)
+	populate_mapping()
 	http.ListenAndServe(":"+get_port(), nil)
 }
