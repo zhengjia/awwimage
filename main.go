@@ -19,7 +19,6 @@ var image_limit = 300
 var server_started_at = time.Now()
 var image_mapping = make(map[string][]string)
 var api_key string
-var kinds = []string{"pug", "corgi", "shiba", "cat", "giraffe"}
 
 type PhotoProperty struct {
 	Url string
@@ -58,6 +57,11 @@ func random(res http.ResponseWriter, req *http.Request) {
 	populate_uptime()
 	kind := req.URL.Query().Get(":kind")
 	action := req.URL.Query().Get(":action")
+	if len(image_mapping[kind]) == 0 {
+		done := make(chan bool)
+		go check_image_presence(kind, done)
+		<-done
+	}
 	index := rand.Intn(len(image_mapping[kind]))
 	url := image_mapping[kind][index]
 	if action == "preview" {
@@ -134,7 +138,7 @@ func visit(url string) []byte {
 	return body_bytes
 }
 
-func populate(kind string, count int) {
+func populate(kind string) {
 	var timestamp int
 	var url string
 	var url_template string
@@ -143,7 +147,7 @@ func populate(kind string, count int) {
 	var tagged_api_response *TaggedApiResponse
 	var results []string
 	url_template = "http://api.tumblr.com/v2/tagged?api_key=" + api_key + "&tag=" + kind
-	for len(results) < count {
+	for len(results) < image_limit {
 		if timestamp == 0 {
 			url = url_template
 		} else {
@@ -163,8 +167,9 @@ func populate(kind string, count int) {
 }
 
 func populate_mapping() {
+	kinds := []string{"pug", "corgi", "shiba", "cat", "giraffe"}
 	for _, kind := range kinds {
-		go populate(kind, image_limit)
+		go populate(kind)
 	}
 }
 
@@ -174,11 +179,16 @@ func populate_uptime() {
 	}
 }
 
+func check_image_presence(kind string, done chan bool) {
+	for len(image_mapping[kind]) == 0 {
+		time.Sleep(time.Second)
+	}
+	done <- true
+}
+
 func initialize() {
 	set_api_key()
-	for _, kind := range kinds {
-		populate(kind, 5)
-	}
+	populate_mapping()
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
@@ -193,6 +203,5 @@ func main() {
 	m.Get("/bomb/:kind/:number", http.HandlerFunc(bomb))
 	http.Handle("/", m)
 	http.HandleFunc("/instruction", instruction)
-	populate_mapping()
 	http.ListenAndServe(":"+get_port(), nil)
 }
