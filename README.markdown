@@ -1,5 +1,14 @@
-Just another pugme
-==================
+Introduction
+============
+This is an API for a random cute image from tumblr. The list is refreshed every hour.
+
+Demo (refresh to see a new image every time)
+-------
+* http://awwimage.herokuapp.com/random/pug/preview
+* http://awwimage.herokuapp.com/random/corgi/preview
+* http://awwimage.herokuapp.com/random/cat/preview
+* http://awwimage.herokuapp.com/random/giraffe/preview
+
 Ramdom
 ------
 * http://awwimage.herokuapp.com/random/pug
@@ -13,13 +22,6 @@ Bomb
 * http://awwimage.herokuapp.com/bomb/corgi
 * http://awwimage.herokuapp.com/bomb/cat
 * http://awwimage.herokuapp.com/bomb/giraffe
-
-Preview
--------
-* http://awwimage.herokuapp.com/random/pug/preview
-* http://awwimage.herokuapp.com/random/corgi/preview
-* http://awwimage.herokuapp.com/random/cat/preview
-* http://awwimage.herokuapp.com/random/giraffe/preview
 
 Direct link
 -----------
