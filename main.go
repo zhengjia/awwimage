@@ -39,7 +39,7 @@ type TaggedApiResponse struct {
 }
 
 func GetJsonString(v interface{}) string {
-	result, err := json.Marshal(v)
+	result, err := json.MarshalIndent(v, "", "    ")
 	check(err)
 	return string(result)
 }
@@ -96,12 +96,23 @@ func check(err error) {
 	}
 }
 
-func Endpoints() *map[string]string {
-	return &map[string]string{
-		"/instruction":             "Get a random image. Supported keywords: pug, corgi, cat, giraffe",
-		"/count/:keyword":          "Number of images available",
-		"/random/:keyword/:action": "Get a random image. Optional action: url (get the link directly), preview (preview the image)",
-		"/bomb/:keyword/:number":   "Get a number of images. Default to 4",
+func Endpoints() *map[string]map[string]string {
+	return &map[string]map[string]string{
+		"DEMO": {
+			"pug":     "http://awwimage.herokuapp.com/random/pug/preview",
+			"corgi":   "http://awwimage.herokuapp.com/random/corgi/preview",
+			"cat":     "http://awwimage.herokuapp.com/random/cat/preview",
+			"giraffe": "http://awwimage.herokuapp.com/random/giraffe/preview",
+		},
+		"ENDPOINT": {
+			"/instruction":             "Get a random image. Supported keywords: pug, corgi, cat, giraffe",
+			"/count/:keyword":          "Number of images available",
+			"/random/:keyword/:action": "Get a random image. Optional action: url (get the link directly), preview (preview the image)",
+			"/bomb/:keyword/:number":   "Get a number of images. Default to 4",
+		},
+		"ABOUT": {
+			"source": "http://github.com/zhengjia/awwimage",
+		},
 	}
 }
 
