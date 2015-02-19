@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -19,6 +20,7 @@ var image_limit = 300
 var server_started_at = time.Now()
 var image_mapping = make(map[string][]string)
 var api_key string
+var kinds = []string{"pug", "corgi", "shiba", "cat", "giraffe"}
 
 type PhotoProperty struct {
 	Url string
@@ -38,14 +40,20 @@ type TaggedApiResponse struct {
 	Blogs []Blog `json:"response"`
 }
 
+type FetcherInterface interface {
+	Fetch(url string) ([]byte, error)
+}
+
+type tumblrFetcher struct{}
+
 func GetJsonString(v interface{}) string {
 	result, err := json.MarshalIndent(v, "", "    ")
-	check(err)
+	panic_on_error(err)
 	return string(result)
 }
 
 func instruction(res http.ResponseWriter, req *http.Request) {
-	fmt.Fprint(res, GetJsonString(Endpoints()))
+	fmt.Fprint(res, GetJsonString(endpoints()))
 }
 
 func count(res http.ResponseWriter, req *http.Request) {
@@ -54,8 +62,15 @@ func count(res http.ResponseWriter, req *http.Request) {
 }
 
 func random(res http.ResponseWriter, req *http.Request) {
-	populate_uptime()
+	var err error
+	re_populate_every_hour()
 	kind := req.URL.Query().Get(":kind")
+	err = check_kind(kind)
+	if err != nil {
+		res.WriteHeader(400)
+		fmt.Fprint(res, GetJsonString(&map[string]string{"error": err.Error()}))
+		return
+	}
 	action := req.URL.Query().Get(":action")
 	if len(image_mapping[kind]) == 0 {
 		done := make(chan bool)
@@ -74,7 +89,7 @@ func random(res http.ResponseWriter, req *http.Request) {
 }
 
 func bomb(res http.ResponseWriter, req *http.Request) {
-	populate_uptime()
+	re_populate_every_hour()
 	var result []string
 	kind := req.URL.Query().Get(":kind")
 	number := req.URL.Query().Get(":number")
@@ -89,14 +104,19 @@ func bomb(res http.ResponseWriter, req *http.Request) {
 	fmt.Fprint(res, GetJsonString(&map[string][]string{"urls": result}))
 }
 
-// helper methods
-func check(err error) {
+func panic_on_error(err error) {
 	if err != nil {
 		panic(err)
 	}
 }
 
-func Endpoints() *map[string]map[string]string {
+func log_on_error(err error) {
+	if err != nil {
+		log.Println("Error: ", err)
+	}
+}
+
+func endpoints() *map[string]map[string]string {
 	return &map[string]map[string]string{
 		"DEMO": {
 			"pug":     "http://awwimage.herokuapp.com/random/pug/preview",
@@ -132,24 +152,24 @@ func set_api_key() {
 	} else {
 		api_key = os.Getenv("TUMBLR_KEY")
 		if api_key == "" {
-			check(errors.New("TUMBLR_KEY isn't set"))
+			panic_on_error(errors.New("TUMBLR_KEY isn't set"))
 		}
 	}
 }
 
-func visit(url string) []byte {
+func (*tumblrFetcher) Fetch(url string) ([]byte, error) {
 	var err error
 	var resp *http.Response
 	var body_bytes []byte
 	resp, err = http.Get(url)
-	check(err)
+	log_on_error(err)
 	body_bytes, err = ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
-	check(err)
-	return body_bytes
+	log_on_error(err)
+	return body_bytes, err
 }
 
-func populate(kind string) {
+func populate(kind string, fetcher FetcherInterface) {
 	var timestamp int
 	var url string
 	var url_template string
@@ -164,9 +184,12 @@ func populate(kind string) {
 		} else {
 			url = url_template + "&before=" + strconv.Itoa(timestamp)
 		}
-		body_bytes = visit(url)
+		body_bytes, err = fetcher.Fetch(url)
+		if err != nil {
+			continue
+		}
 		err = json.Unmarshal(body_bytes, &tagged_api_response)
-		check(err)
+		log_on_error(err)
 		for _, Blog := range tagged_api_response.Blogs {
 			timestamp = Blog.Timestamp
 			for _, Photo := range Blog.Photos {
@@ -178,13 +201,13 @@ func populate(kind string) {
 }
 
 func populate_mapping() {
-	kinds := []string{"pug", "corgi", "shiba", "cat", "giraffe"}
+	fetcher := tumblrFetcher{}
 	for _, kind := range kinds {
-		go populate(kind)
+		go populate(kind, &fetcher)
 	}
 }
 
-func populate_uptime() {
+func re_populate_every_hour() {
 	if time.Now().Sub(server_started_at) > time.Minute*60 {
 		populate_mapping()
 	}
@@ -197,6 +220,28 @@ func check_image_presence(kind string, done chan bool) {
 	done <- true
 }
 
+func check_kind(kind string) (err error) {
+	for _, k := range kinds {
+		if k == kind {
+			return
+		}
+	}
+	err = errors.New("Image type not supported")
+	return
+}
+
+func getHttpHandler() http.Handler {
+	m := pat.New()
+	m.Get("/", http.HandlerFunc(instruction))
+	m.Get("/instruction", http.HandlerFunc(instruction))
+	m.Get("/count/:kind", http.HandlerFunc(count))
+	m.Get("/random/:kind", http.HandlerFunc(random))
+	m.Get("/random/:kind/:action", http.HandlerFunc(random))
+	m.Get("/bomb/:kind", http.HandlerFunc(bomb))
+	m.Get("/bomb/:kind/:number", http.HandlerFunc(bomb))
+	return m
+}
+
 func initialize() {
 	set_api_key()
 	populate_mapping()
@@ -205,14 +250,7 @@ func initialize() {
 
 func main() {
 	initialize()
-	m := pat.New()
-	m.Get("/", http.HandlerFunc(instruction))
-	m.Get("/count/:kind", http.HandlerFunc(count))
-	m.Get("/random/:kind", http.HandlerFunc(random))
-	m.Get("/random/:kind/:action", http.HandlerFunc(random))
-	m.Get("/bomb/:kind", http.HandlerFunc(bomb))
-	m.Get("/bomb/:kind/:number", http.HandlerFunc(bomb))
-	http.Handle("/", m)
-	http.HandleFunc("/instruction", instruction)
+	handler := getHttpHandler()
+	http.Handle("/", handler)
 	http.ListenAndServe(":"+get_port(), nil)
 }
