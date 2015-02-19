@@ -46,19 +46,13 @@ type FetcherInterface interface {
 
 type tumblrFetcher struct{}
 
-func GetJsonString(v interface{}) string {
-	result, err := json.MarshalIndent(v, "", "    ")
-	panic_on_error(err)
-	return string(result)
-}
-
 func instruction(res http.ResponseWriter, req *http.Request) {
-	fmt.Fprint(res, GetJsonString(endpoints()))
+	fmt.Fprint(res, get_json_string(endpoints()))
 }
 
 func count(res http.ResponseWriter, req *http.Request) {
 	kind := req.URL.Query().Get(":kind")
-	fmt.Fprint(res, GetJsonString(&map[string]int{"count": len(image_mapping[kind])}))
+	fmt.Fprint(res, get_json_string(&map[string]int{"count": len(image_mapping[kind])}))
 }
 
 func random(res http.ResponseWriter, req *http.Request) {
@@ -68,14 +62,17 @@ func random(res http.ResponseWriter, req *http.Request) {
 	err = check_kind(kind)
 	if err != nil {
 		res.WriteHeader(400)
-		fmt.Fprint(res, GetJsonString(&map[string]string{"error": err.Error()}))
+		fmt.Fprint(res, get_json_string(&map[string]string{"error": err.Error()}))
 		return
 	}
 	action := req.URL.Query().Get(":action")
 	if len(image_mapping[kind]) == 0 {
-		done := make(chan bool)
-		go check_image_presence(kind, done)
-		<-done
+		err = wait_for_populating(kind)
+		if err != nil {
+			res.WriteHeader(500)
+			fmt.Fprint(res, get_json_string(&map[string]string{"error": err.Error()}))
+			return
+		}
 	}
 	index := rand.Intn(len(image_mapping[kind]))
 	url := image_mapping[kind][index]
@@ -84,15 +81,25 @@ func random(res http.ResponseWriter, req *http.Request) {
 	} else if action == "url" {
 		fmt.Fprint(res, url)
 	} else {
-		fmt.Fprint(res, GetJsonString(&map[string]string{"url": url}))
+		fmt.Fprint(res, get_json_string(&map[string]string{"url": url}))
 	}
 }
 
 func bomb(res http.ResponseWriter, req *http.Request) {
+	var err error
 	refresh_every_hour()
 	var result []string
 	kind := req.URL.Query().Get(":kind")
 	number := req.URL.Query().Get(":number")
+	if len(image_mapping[kind]) == 0 {
+		err = wait_for_populating(kind)
+		if err != nil {
+			res.WriteHeader(500)
+			fmt.Fprint(res, get_json_string(&map[string]string{"error": err.Error()}))
+			return
+		}
+	}
+
 	if number == "" {
 		number = "4"
 	}
@@ -101,7 +108,7 @@ func bomb(res http.ResponseWriter, req *http.Request) {
 	for _, pos := range permutation[:number_str] {
 		result = append(result, image_mapping[kind][pos])
 	}
-	fmt.Fprint(res, GetJsonString(&map[string][]string{"urls": result}))
+	fmt.Fprint(res, get_json_string(&map[string][]string{"urls": result}))
 }
 
 func panic_on_error(err error) {
@@ -137,24 +144,14 @@ func endpoints() *map[string]map[string]string {
 	}
 }
 
-func get_port() string {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "4000"
-	}
-	return port
-}
-
-func set_api_key() {
-	var err error
-	config, err := ioutil.ReadFile("config")
-	if err == nil {
-		api_key = strings.TrimSpace(string(config))
-	} else {
-		api_key = os.Getenv("TUMBLR_KEY")
-		if api_key == "" {
-			panic_on_error(errors.New("TUMBLR_KEY isn't set"))
-		}
+func wait_for_populating(kind string) (err error) {
+	done := make(chan bool)
+	go check_image_presence(kind, done)
+	select {
+	case <-done:
+		return
+	case <-time.After(time.Second * 30):
+		return errors.New("Timeout")
 	}
 }
 
@@ -230,6 +227,33 @@ func check_kind(kind string) (err error) {
 	}
 	err = errors.New("Image type not supported")
 	return
+}
+
+func get_json_string(v interface{}) string {
+	result, err := json.MarshalIndent(v, "", "    ")
+	panic_on_error(err)
+	return string(result)
+}
+
+func get_port() string {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "4000"
+	}
+	return port
+}
+
+func set_api_key() {
+	var err error
+	config, err := ioutil.ReadFile("config")
+	if err == nil {
+		api_key = strings.TrimSpace(string(config))
+	} else {
+		api_key = os.Getenv("TUMBLR_KEY")
+		if api_key == "" {
+			panic_on_error(errors.New("TUMBLR_KEY isn't set"))
+		}
+	}
 }
 
 func getHttpHandler() http.Handler {
