@@ -17,7 +17,7 @@ import (
 )
 
 var image_limit = 300
-var server_started_at = time.Now()
+var last_refreshed_at time.Time
 var image_mapping = make(map[string][]string)
 var api_key string
 var kinds = []string{"pug", "corgi", "shiba", "cat", "giraffe"}
@@ -63,7 +63,7 @@ func count(res http.ResponseWriter, req *http.Request) {
 
 func random(res http.ResponseWriter, req *http.Request) {
 	var err error
-	re_populate_every_hour()
+	refresh_every_hour()
 	kind := req.URL.Query().Get(":kind")
 	err = check_kind(kind)
 	if err != nil {
@@ -89,7 +89,7 @@ func random(res http.ResponseWriter, req *http.Request) {
 }
 
 func bomb(res http.ResponseWriter, req *http.Request) {
-	re_populate_every_hour()
+	refresh_every_hour()
 	var result []string
 	kind := req.URL.Query().Get(":kind")
 	number := req.URL.Query().Get(":number")
@@ -201,14 +201,15 @@ func populate(kind string, fetcher FetcherInterface) {
 }
 
 func populate_mapping() {
+	last_refreshed_at = time.Now()
 	fetcher := tumblrFetcher{}
 	for _, kind := range kinds {
 		go populate(kind, &fetcher)
 	}
 }
 
-func re_populate_every_hour() {
-	if time.Now().Sub(server_started_at) > time.Minute*60 {
+func refresh_every_hour() {
+	if time.Now().Sub(last_refreshed_at) > time.Minute*60 {
 		populate_mapping()
 	}
 }
