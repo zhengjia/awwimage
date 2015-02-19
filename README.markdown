@@ -6,6 +6,7 @@ Demo (refresh to see a new image every time)
 -------
 * http://awwimage.herokuapp.com/random/pug/preview
 * http://awwimage.herokuapp.com/random/corgi/preview
+* http://awwimage.herokuapp.com/random/shiba/preview
 * http://awwimage.herokuapp.com/random/cat/preview
 * http://awwimage.herokuapp.com/random/giraffe/preview
 
@@ -13,6 +14,7 @@ Ramdom
 ------
 * http://awwimage.herokuapp.com/random/pug
 * http://awwimage.herokuapp.com/random/corgi
+* http://awwimage.herokuapp.com/random/shiba
 * http://awwimage.herokuapp.com/random/cat
 * http://awwimage.herokuapp.com/random/giraffe
 
@@ -20,6 +22,7 @@ Bomb
 ----
 * http://awwimage.herokuapp.com/bomb/pug
 * http://awwimage.herokuapp.com/bomb/corgi
+* http://awwimage.herokuapp.com/bomb/shiba
 * http://awwimage.herokuapp.com/bomb/cat
 * http://awwimage.herokuapp.com/bomb/giraffe
 
@@ -27,6 +30,7 @@ Direct link
 -----------
 * http://awwimage.herokuapp.com/random/pug/url
 * http://awwimage.herokuapp.com/random/corgi/url
+* http://awwimage.herokuapp.com/random/shiba/url
 * http://awwimage.herokuapp.com/random/cat/url
 * http://awwimage.herokuapp.com/random/giraffe/url
 

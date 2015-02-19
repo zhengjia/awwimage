@@ -121,11 +121,12 @@ func endpoints() *map[string]map[string]string {
 		"DEMO": {
 			"pug":     "http://awwimage.herokuapp.com/random/pug/preview",
 			"corgi":   "http://awwimage.herokuapp.com/random/corgi/preview",
+			"shiba":   "http://awwimage.herokuapp.com/random/shiba/preview",
 			"cat":     "http://awwimage.herokuapp.com/random/cat/preview",
 			"giraffe": "http://awwimage.herokuapp.com/random/giraffe/preview",
 		},
 		"ENDPOINT": {
-			"/instruction":             "Get a random image. Supported keywords: pug, corgi, cat, giraffe",
+			"/instruction":             "Get a random image. Supported keywords: pug, corgi, shiba, cat, giraffe",
 			"/count/:keyword":          "Number of images available",
 			"/random/:keyword/:action": "Get a random image. Optional action: url (get the link directly), preview (preview the image)",
 			"/bomb/:keyword/:number":   "Get a number of images. Default to 4",
